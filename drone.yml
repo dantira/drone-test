@@ -4,6 +4,9 @@ type: docker
 
 steps:
 - name: test
-  image: alpine
-  commands:
-  - echo "It worked!!!XX!"
+  image: plugins/ansible
+  settings:
+    playbook: .ansible/playbook.yml
+    inventory: .ansible/inventory.yml
+    private_key:
+      from_secret: ansible_private_key

@@ -1,0 +1,9 @@
+---
+all:
+  hosts:
+    earth:
+      ansible_host: 64.226.73.231
+      ansible_user: root
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
