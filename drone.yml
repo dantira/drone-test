@@ -10,7 +10,7 @@ steps:
       from_secret: ansible_private_key
 
 - name: test
-  image: plugins/ansible:3.0
+  image: plugins/ansible
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
