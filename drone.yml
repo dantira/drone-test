@@ -8,6 +8,7 @@ steps:
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
+    become: true
     ssh_extra_args: "-o StrictHostKeyChecking=no"
     extra_vars:
       from_secret: ANSIBLE_EXTRA_VARS
