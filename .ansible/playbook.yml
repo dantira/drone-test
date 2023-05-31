@@ -4,7 +4,7 @@
     digital_ocean_token: dop_v1_0fdfafe94ad31a601c6c1c2a0168c3f837b12303ee0b0719bc21854f8cab661c
   tasks:
   - name: Log into Docker Registry Dan
-    community.docker.docker_login:
+    community.general.docker_login:
           registry: registry.digitalocean.com
           username: "{{ digital_ocean_token }}"
           password: "{{ digital_ocean_token }}"
