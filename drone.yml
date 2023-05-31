@@ -9,5 +9,5 @@ steps:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
     ssh_extra_args: "-o StrictHostKeyChecking=no"
-    private_key:
-      from_secret: ansible_private_key
+#    private_key:
+#      from_secret: ansible_private_key
