@@ -3,6 +3,14 @@ kind: pipeline
 type: docker
 
 steps:
+- name: testvar
+  image: alpine:3.8
+  environment:
+    SSH_KEY:
+      from_secret: ansible_private_key
+  commands:
+      - echo "$SSH_KEY"
+
 - name: test
   image: plugins/ansible:3.0
   settings:
@@ -14,3 +22,5 @@ steps:
       from_secret: ANSIBLE_EXTRA_VARS
     private_key:
       from_secret: ansible_private_key
+
+
