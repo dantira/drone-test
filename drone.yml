@@ -11,7 +11,7 @@ steps:
 - name: test
   image: plugins/ansible:3.0
   secrets:
-    - source: DEPLOY_KEY
+    - source: ansible_private_key
       target: ssh_key
   settings:
     playbook: .ansible/playbook.yml
