@@ -10,7 +10,7 @@ steps:
       from_secret: DEPLOY_KEY
 
 - name: test
-  image: plugins/ansible
+  image: plugins/ansible:3.0
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
