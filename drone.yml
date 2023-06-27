@@ -12,7 +12,7 @@ steps:
   image: plugins/ansible:3.0
   secrets:
     - source: DEPLOY_KEY
-      target: scp_key
+      target: ssh_key
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
@@ -21,6 +21,6 @@ steps:
 #    extra_vars:
 #      from_secret: ANSIBLE_EXTRA_VARS
     private_key:
-      from_secret: $scp_key
+      from_secret: $ssh_key
 
 
