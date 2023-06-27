@@ -2,6 +2,8 @@ name: drone-test
 kind: pipeline
 type: docker
 
+
+
 steps:
 - name: testvar
   image: alpine:3.8
@@ -11,6 +13,9 @@ steps:
 
 - name: test
   image: plugins/ansible:3.0
+  secrets:
+    - source: DEPLOY_KEY
+      target: scp_key
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
@@ -18,7 +23,10 @@ steps:
     ssh_extra_args: "-o StrictHostKeyChecking=no"
     extra_vars:
       from_secret: ANSIBLE_EXTRA_VARS
+#    secrets:
+#      - source: DEPLOY_KEY
+#        target: scp_key
     private_key:
-      from_secret: DEPLOY_KEY
+      from_secret: $scp_key
 
 
