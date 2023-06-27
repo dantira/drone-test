@@ -15,8 +15,8 @@ steps:
     inventory: .ansible/inventory.yml
     become: true
     ssh_extra_args: "-o StrictHostKeyChecking=no"
-#    extra_vars:
-#      from_secret: ANSIBLE_EXTRA_VARS
+    extra_vars:
+      from_secret: ansible_extra_vars
     private_key:
       from_secret: ansible_private_key
 
