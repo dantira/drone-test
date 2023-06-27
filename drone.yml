@@ -10,9 +10,6 @@ steps:
 
 - name: test
   image: plugins/ansible:3.0
-  secrets:
-    - source: ansible_private_key
-      target: ssh_key
   settings:
     playbook: .ansible/playbook.yml
     inventory: .ansible/inventory.yml
@@ -21,6 +18,6 @@ steps:
 #    extra_vars:
 #      from_secret: ANSIBLE_EXTRA_VARS
     private_key:
-      from_secret: $ssh_key
+      from_secret: ansible_private_key
 
 
