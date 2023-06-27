@@ -12,11 +12,12 @@
     apt:
       update_cache: yes
       cache_valid_time: 3600
+
   - name: Install aptitude
     apt:
-     name: aptitude
-     state: latest
-    update_cache: true
+      name: aptitude
+      state: latest
+      update_cache: true
 
   - name: Install required system packages- apt-transport-https
         - ca-certificates
