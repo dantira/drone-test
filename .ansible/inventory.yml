@@ -2,7 +2,7 @@
 all:
   hosts:
     earth:
-      ansible_host: 64.226.73.231
+      ansible_host: 164.92.206.39
       ansible_user: root
 
   vars:
