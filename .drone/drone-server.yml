@@ -1,0 +1,175 @@
+---
+
+- name: PLAY for creating dropltes in DO
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    #Your digital ocean token belongs here
+    digital_ocean_token: YOUR_DO_TOKEN_HERE
+    droplet_size: s-1vcpu-1gb
+    droplet_region: fra1
+    droplet_image: ubuntu-22-10-x64
+
+  tasks:
+
+    - name: "add public ssh key to digitalocean account"
+      digital_ocean_sshkey:
+        name: "dan"
+        oauth_token: "{{ digital_ocean_token }}"
+        #Adapt Path to public ssh key
+        ssh_pub_key: "{{lookup('file', '~/.ssh/keys/xxx.pub') }}"
+        state: present
+      register: sshkey_result
+
+    - name: create a new droplet assigning the key
+      digital_ocean_droplet:
+        name: "{{ item }}"
+        oauth_token: "{{ digital_ocean_token }}"
+        size: "{{ droplet_size }}"
+        region: "{{ droplet_region }}"
+        image: "{{ droplet_image }}"
+        wait_timeout: 800
+        unique_name: yes
+        ssh_keys: ["{{ sshkey_result.data.ssh_key.id }}"]
+        state: present
+      with_items:
+        - drone.server.com
+      register: droplet_result
+
+
+    - name: Add new droplet to host group
+      local_action: add_host hostname={{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }} groupname=launched ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+      with_items: "{{ droplet_result.results  }}"
+
+    - name: Wait for SSH to come up
+      local_action: wait_for
+        host={{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('<none>', true) }}
+        port=22
+        state=started
+      with_items: "{{ droplet_result.results }}"
+
+- hosts: launched
+  gather_facts: no
+  become: yes
+  become_user: root
+  vars:
+    container_count: 1
+    drone_server_container_name: docker-drone
+    drone_server_image: drone/drone:2
+    drone_runner_container_name: docker-drone-runner
+    drone_runner_image: drone/drone-runner-docker:1.8
+    #Your digital ocean token belongs here
+    digital_ocean_token: dop_v1_0fdfafe94ad31a601c6c1c2a0168c3f837b12303ee0b0719bc21854f8cab661c
+    ansible_user: root
+    ansible_python_interpreter: /usr/bin/python3
+    #Adapt Path to public ssh key
+    ansible_ssh_private_key_file: /home/dan/.ssh/keys/private
+
+  tasks:
+    - ping:
+    - name: "apt-get update"
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    #CREATE drone env file
+    #    DRONE_SERVER_PROTO=https
+    #    DRONE_SERVER_HOST=drone.tira.com.ro
+    #    DRONE_GITHUB_CLIENT_ID=xxxxx
+    #    DRONE_GITHUB_CLIENT_SECRET=xxxxxx
+    #    DRONE_RPC_SECRET=xxxx
+    #    DRONE_USER_CREATE=username:user,admin:true
+
+    - name: Copy drone env file
+      ansible.builtin.copy:
+        #Adapt Path to drone env file
+        src:  /home/drone
+        dest: /etc/drone
+
+    - name: Copy drone env file
+      ansible.builtin.copy:
+        src:  /home/dan/Data/Learn/ansible-fundamentals/Ansible-DigitalOcean/Ansible-Do-Drone/digital-dan
+        dest: /digital-dan
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Log into Docker Registry
+      community.docker.docker_login:
+         registry: registry.digitalocean.com
+         username: "{{ digital_ocean_token }}"
+         password: "{{ digital_ocean_token }}"
+
+    - name: Pull Docker server image
+      community.docker.docker_image:
+        name: "{{ drone_server_image }}"
+        source: pull
+
+    - name: Create drone server container
+      community.docker.docker_container:
+        name: "{{ drone_server_container_name }}{{ item }}"
+        image: "{{ drone_server_image }}"
+        recreate: yes
+        pull: true
+        ports:
+          - "80:80"
+          - "443:443"
+        volumes:
+          - "drone-data:/var/www/html/storage/drone-data"
+        env_file: /etc/drone
+        state: started
+      with_sequence: count={{ container_count }}
+
+    - name: Create drone runner container
+      community.docker.docker_container:
+        name: "{{ drone_runner_container_name}}{{ item }}"
+        image: "{{ drone_runner_image }}"
+        recreate: yes
+        pull: true
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        env:
+          DRONE_RPC_PROTO=https
+          DRONE_RPC_HOST=drone.tira.com.ro
+          DRONE_RPC_SECRET=xxxxxxx
+          DRONE_RUNNER_CAPACITY=1
+          DRONE_RUNNER_NAME=${HOSTNAME}
+        state: started
+      with_sequence: count={{ container_count }}

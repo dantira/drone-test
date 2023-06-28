@@ -1,0 +1,6 @@
+DRONE_SERVER_PROTO=https
+DRONE_SERVER_HOST=drone.tira.com.ro
+DRONE_GITHUB_CLIENT_ID=xxxxx
+DRONE_GITHUB_CLIENT_SECRET=xxxxxx
+DRONE_RPC_SECRET=xxxxxx
+DRONE_USER_CREATE=username:user,admin:true

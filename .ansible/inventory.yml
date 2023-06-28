@@ -2,7 +2,7 @@
 all:
   hosts:
     earth:
-      ansible_host: 159.89.97.70
+      ansible_host: ENTER_HOST_IP
       ansible_user: root
 
   vars:
