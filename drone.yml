@@ -10,9 +10,14 @@ steps:
 
 - name: test
   image: plugins/ansible:3.0
+  environment:
+    DO_PUBLIC_KEY:
+      from_secret: do_public_key
+    DO_PRIVATE_KEY:
+      from_secret: ansible_private_key
   settings:
     playbook: .ansible/playbook.yml
-    inventory: .ansible/inventory.yml
+    inventory: .ansible/do-hosts.yml
     become: true
     ssh_extra_args: "-o StrictHostKeyChecking=no"
     extra_vars:

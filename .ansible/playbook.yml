@@ -1,5 +1,54 @@
 ---
-- hosts: earth
+
+- name: Create droplet in do
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    digital_ocean_token: "{{ digital_ocean_token }}"
+    droplet_size: s-1vcpu-1gb
+    droplet_region: fra1
+    droplet_image: ubuntu-22-10-x64
+
+  tasks:
+
+    - name: "Add public ssh key to digitalocean account"
+      digital_ocean_sshkey:
+        name: "dan"
+        oauth_token: "{{ digital_ocean_token }}"
+        ssh_pub_key: "{{ lookup('env', 'DO_PUBLIC_KEY') }}"
+        state: present
+      register: sshkey_result
+
+    - name: create a new droplet assigning the key
+      digital_ocean_droplet:
+        name: "{{ item }}"
+        oauth_token: "{{ digital_ocean_token }}"
+        size: "{{ droplet_size }}"
+        region: "{{ droplet_region }}"
+        image: "{{ droplet_image }}"
+        wait_timeout: 600
+        unique_name: yes
+        ssh_keys: ["{{ sshkey_result.data.ssh_key.id }}"]
+        state: present
+      with_items:
+        - test.vm
+      register: droplet_result
+
+
+    - name: Add new droplet to host group
+      local_action: add_host hostname={{ item.data.ip_address }} groupname=launched ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+      with_items: "{{ droplet_result.results  }}"
+
+    - name: Wait for SSH to come up
+      local_action: wait_for
+        host={{ item.data.ip_address }}
+        port=22
+        state=started
+      with_items: "{{ droplet_result.results }}"
+
+- hosts: launched
   vars:
     instance: "{{ lookup('env', 'DRONE_DEPLOY_TO') }}"
     docker_id: "tbpeople_{{ instance }}"
